@@ -1,0 +1,33 @@
+// New to Stylus? Check out http://learnboost.github.io/stylus
+// Use modern CSS thanks to Autoprefixer: https://github.com/ai/autoprefixer
+
+// Import CSS from "node_modules" and "bower_components"
+// thanks to Stylus' "import css" and "paths" options
+
+@import 'prism/themes/prism-okaidia.css'
+// Check out "bower_components/prism/themes/" for available themes
+
+section
+  img
+    max-width: 100%
+  code
+    font-size: 70%
+  pre[class*="language-"]
+    padding: 7px 17px !important
+    min-width: 100%
+    &.smaller
+      font-size: 70%
+    &.smallest
+      font-size: 50%
+
+p.nmb
+  margin-bottom: 0
+
+#pilogo
+  width: 75px;
+  position: relative;
+  top: -75px;
+  left: -37%;
+
+code[class*="language-"], pre[class*="language-"]
+  line-height: normal;

@@ -1,0 +1,276 @@
+doctype html
+html
+    head
+        meta(charset='utf-8')
+        meta(name='viewport', content='width=device-width, initial-scale=1, maximum-scale=1')
+        title PHP and Zephir and Pi, oh my!
+
+        link(rel='stylesheet', type='text/css', href='build/build.css')
+
+    body
+
+        article
+
+            section(data-bespoke-hash='intro')
+                h1 PHP and Zephir and Pi, oh my!
+                h3 Andrew Collington
+                p
+                    a(href='http://blog.amnuts.com/') http://blog.amnuts.com/
+                    br
+                    a(href='http://twitter.com/acollington') @acollington
+
+            section(data-bespoke-hash='pi')
+                h2 The Raspberry Pi
+                h3 an awesome little computer
+                p
+                    img(src="images/raspberry_pi.png", alt="The Raspberry Pi board")
+                    img(id="pilogo", src="images/rpi-logo.png", alt="The Raspberry Pi logo")
+
+            section(data-bespoke-hash='gpio')
+                h2 What is GPIO?
+                ul.bullet
+                    li Stands for <i>General Purpose Input/Output</i>
+                    li Can be configured to be either input or output
+                    li Input values are read (typically high=1, low=0)
+                    li Output values readable and writable
+                    li Allows us to hook up sensors, servos, motors, LEDs
+
+            section(data-bespoke-hash='using-gpio')
+                h2 Using GPIO on the RPi
+                ul.bullet
+                    li Python (using RPi.GPIO library)
+                    li Scratch (using ScratchGPIO)
+                    li C (using wiringPi library)
+                    li PHP (using ronanguilloux/php-gpio)
+
+            section(data-bespoke-hash='extension')
+                h2.bullet What about a PHP extension?
+                ul
+                    li Possibly the most convoluted way to turn on/off an LED on the RPi
+                    li wiringPi does all the hard work with GPIO
+                    li Zephir does all the hard work making an extension
+
+            section(data-bespoke-hash='zephir')
+                h2.bullet What is Zephir?
+                ul
+                    li Open source language for creating compiled PHP extensions
+                    li Syntax very similar to PHP and C - easy to get to grips with
+                    li Lightning talk on Zephir: <a href="http://goo.gl/HToAIs">http://goo.gl/HToAIs</a>
+
+            section
+                h2 Let's make an extension!
+
+            section(data-bespoke-hash='installing')
+                p.nmb Install Zephir
+                pre
+                    code.language-bash.
+                        $ sudo apt-get update
+                        $ sudo apt-get install gcc make re2c php5 php5-json php5-dev libpcre3-dev
+
+                        $ git clone https://github.com/phalcon/zephir
+                        $ cd zephir && ./install -cp Install wiringPi
+                p.nmb Install wiringPi
+                pre
+                    code.language-bash.
+                        $ git clone git://git.drogon.net/wiringPi
+                        $ cd wiringPi
+                        $ ./build
+
+            section(data-bespoke-hash='setting-up')
+                p.nmb Setting up the extension
+                pre
+                    code.language-bash.
+                        $ zephir init phpiwire
+                p &nbsp;
+                p.nmb Creates the directory structure
+                    pre
+                        code.language-bash.
+                            config.json
+                            ext/
+                            phpiwire
+
+            section(data-bespoke-hash='syntax')
+                pre
+                    code.language-c.
+                        namespace App;
+
+                        class MyClass
+                        {
+                          protected value;
+
+                          public function getSomeData(a, const uint! val = 20) -> string | bool
+                          {
+                            let this->value = val;
+
+                            if a == false {
+                              return false;
+                            }
+
+                            return "error";
+                          }
+                        }
+
+            section(data-bespoke-hash='c-code')
+                p Setting up the classes relies heavily on the C code insertion
+                pre
+                    code.language-php.
+                        namespace Phpiwire;
+
+                        %{
+                        #include &lt;wiringPi.h&gt;
+                        }%
+
+                        class Board
+                        {
+                          public function pwmRange(uint! range = 1024)
+                          {
+                            %{ pwmSetRange(range); }%
+                            return this;
+                          }
+                        }
+
+            section(data-bespoke-hash='c-code')
+                p Zephir & Zend Engine language calls
+                pre.smaller
+                    code.language-c.
+                        public function read(int! type = self::DIGITAL) -> long
+                        {
+                          var value = null;
+
+                          %{
+                            zval *pinnum;
+                            zephir_read_property_this(&pinnum, this_ptr, SL("id"), PH_NOISY_CC);
+                            int pin = Z_LVAL_P(pinnum);
+                          }%
+
+                          switch type {
+                            case self::DIGITAL:
+                              %{ ZVAL_LONG(value, digitalRead(pin)); }%
+                              break;
+                            case self::ANALOG:
+                              %{ ZVAL_LONG(value, analogRead(pin)); }%
+                              break;
+                          }
+
+                          return value;
+                        }
+
+            section(data-bespoke-hash='c-code-breakdown')
+                ul
+                    li Get a class property
+                        pre.smaller
+                            code.language-c.
+                                zephir_read_property_this(&pinnum, this_ptr, SL("id"), PH_NOISY_CC);
+                    li The <i>ZEND_STRL</i> macro to get static string length
+                        pre.smaller
+                            code.language-c.
+                                SL("id")
+                    li Part of the Thread Safety Resource Manager Local Storage (<i>TSRMLS_CC</i>)
+                        pre.smaller
+                            code.language-c.
+                                PH_NOISY_CC
+                    li Assign the return value of digitalRead(pin) to a zval structure with the type of 'long'
+                        pre.smaller
+                            code.language-c.
+                                ZVAL_LONG(value, digitalRead(pin));
+                    li Read and return the long value
+                        pre.smaller
+                            code.language-c.
+                                Z_LVAL_P(pinnum);
+
+            section(data-bespoke-hash='phpiwire')
+                h2 The easy way
+                p Just download from GitHub!
+                pre
+                    code.language-bash.
+                        $ git clone https://github.com/amnuts/phpiwire
+                        $ cd phpiwire
+                        $ zephir build
+                br
+                p Add to php.ini
+                pre
+                    code.language-ini.
+                        extension=phpiwire.so
+
+            section(data-bespoke-hash='example1')
+                h2 Get info about the board
+                pre
+                    code.language-php.
+                        &lt;?php
+
+                        namespace Phpiwire;
+
+                        $pi = new Board();
+
+                        echo $pi, "\n";
+                        var_dump($pi->version());
+
+            section(data-bespoke-hash='example2')
+                h2 Let's (finally) blink that LED
+                pre
+                    code.language-php.
+                        &lt;?php
+
+                        namespace Phpiwire;
+
+                        $p = (new Board())->getPin(0)->mode(Pin::OUTPUT);
+                        while (true) {
+                            $p->write(Pin::HIGH);
+                            sleep(1);
+                            $p->write(Pin::LOW);
+                            sleep(1);
+                        }
+            section(data-bespoke-hash='example2')
+                h2 What about an RGB LED?
+                pre.smallest
+                    code.language-php.
+                        $sleep = 20000;
+                        $rgb = [100, 0, 0];
+
+                        while (true) {
+                            for ($dec = 0; $dec < 3; $dec += 1) {
+                                $inc = $dec == 2 ? 0 : $dec + 1;
+                                for ($i = 0; $i < 100; $i += 1) {
+                                    $rgb[$dec] -= 1;
+                                    $rgb[$inc] += 1;
+                                    writePins($rgb);
+                                    usleep($sleep);
+                                }
+                            }
+                        }
+
+                        function writePins(array $rgb)
+                        {
+                            static $pi, $r, $g, $b;
+                            if ($pi === null) {
+                                $pi = new Board();
+                                $r = $pi->getPin(0)->mode(Pin::SOFT_PWM_OUT)->softPwmWrite(100);
+                                $g = $pi->getPin(1)->mode(Pin::SOFT_PWM_OUT);
+                                $b = $pi->getPin(2)->mode(Pin::SOFT_PWM_OUT);
+                            }
+                            $r->softPwmWrite($rgb[0]);
+                            $g->softPwmWrite($rgb[1]);
+                            $b->softPwmWrite($rgb[2]);
+                        }
+
+            section(data-bespoke-hash='conclusion')
+                h2.bullet Conclusion
+                ul
+                    li PHP is awesomely versatile
+                    li The RaspberryPi is is fun to play with
+                    li This is just the start - so much more could be done!
+
+            section(data-bespoke-hash='code')
+                h2 Resources and info
+                p Zephir<br/>
+                    a(href='http://zephir-lang.com/')  http://zephir-lang.com/
+                p wiringPi<br/>
+                    a(href='http://wiringpi.com/')  http://wiringpi.com/
+                p phpiwire<br/>
+                    a(href='https://github.com/amnuts/phpiwire')  https://github.com/amnuts/phpiwire
+
+            section(data-bespoke-hash='thanks')
+                h1 Thanks! :-)
+
+
+        script(src='build/build.js')

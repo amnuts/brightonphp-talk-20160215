@@ -1,5 +1,7 @@
 'use strict';
 
+var distPath = '/home/pi/www/brightonphp';
+
 var pkg = require('./package.json'),
   gulp = require('gulp'),
   gutil = require('gulp-util'),
@@ -25,7 +27,7 @@ gulp.task('js', ['clean:js'], function() {
     .pipe(browserify({ transform: ['debowerify'], debug: !isDist }))
     .pipe(isDist ? uglify() : through())
     .pipe(rename('build.js'))
-    .pipe(gulp.dest('dist/build'))
+    .pipe(gulp.dest(distPath + '/build'))
     .pipe(connect.reload());
 });
 
@@ -34,7 +36,7 @@ gulp.task('html', ['clean:html'], function() {
     .pipe(isDist ? through() : plumber())
     .pipe(jade({ pretty: true }))
     .pipe(rename('index.html'))
-    .pipe(gulp.dest('dist'))
+    .pipe(gulp.dest(distPath))
     .pipe(connect.reload());
 });
 
@@ -49,13 +51,13 @@ gulp.task('css', ['clean:css'], function() {
     .pipe(autoprefixer('last 2 versions', { map: false }))
     .pipe(isDist ? csso() : through())
     .pipe(rename('build.css'))
-    .pipe(gulp.dest('dist/build'))
+    .pipe(gulp.dest(distPath + '/build'))
     .pipe(connect.reload());
 });
 
 gulp.task('images', ['clean:images'], function() {
   return gulp.src('src/images/**/*')
-    .pipe(gulp.dest('dist/images'))
+    .pipe(gulp.dest(distPath + '/images'))
     .pipe(connect.reload());
 });
 
@@ -64,19 +66,19 @@ gulp.task('clean', function(done) {
 });
 
 gulp.task('clean:html', function(done) {
-  del('dist/index.html', done);
+  del(distPath + '/index.html', done);
 });
 
 gulp.task('clean:js', function(done) {
-  del('dist/build/build.js', done);
+  del(distPath + '/build/build.js', done);
 });
 
 gulp.task('clean:css', function(done) {
-  del('dist/build/build.css', done);
+  del(distPath + '/build/build.css', done);
 });
 
 gulp.task('clean:images', function(done) {
-  del('dist/images', done);
+  del(distPath + '/images', done);
 });
 
 gulp.task('connect', ['build'], function() {

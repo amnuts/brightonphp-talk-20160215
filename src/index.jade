@@ -87,7 +87,9 @@ html
                         code.language-bash.
                             config.json
                             ext/
-                            phpiwire
+                            phpiwire/
+                p &nbsp;
+                p Files have .zep extension<br/>Filename typically matches class name
 
             section(data-bespoke-hash='syntax')
                 pre
@@ -129,7 +131,54 @@ html
                           }
                         }
 
-            section(data-bespoke-hash='c-code')
+            section(data-bespoke-hash='compiles-to')
+                pre.smallest
+                    code.language-c.
+                        #ifdef HAVE_CONFIG_H
+                        #include "../ext_config.h"
+                        #endif
+                        #include <php.h>
+                        #include "../php_ext.h"
+                        #include "../ext.h"
+                        #include &lt;Zend/zend_operators.h&gt;
+                        #include &lt;Zend/zend_exceptions.h&gt;
+                        #include &lt;Zend/zend_interfaces.h&gt;
+                        #include "kernel/main.h"
+                        #include "kernel/fcall.h"
+                        #include "kernel/memory.h"
+                        #include "kernel/array.h"
+                        #include "kernel/object.h"
+                        #include "ext/spl/spl_exceptions.h"
+                        #include "kernel/exception.h"
+                        #include "kernel/concat.h"
+                        #include "kernel/operators.h"
+                        #include &lt;wiringPi.h&gt;
+
+                        ZEPHIR_INIT_CLASS(Phpiwire_Board) {
+                            ZEPHIR_REGISTER_CLASS(Phpiwire, Board, phpiwire, board, phpiwire_board_method_entry, 0);
+                            phpiwire_board_ce->create_object = zephir_init_properties_Phpiwire_Board;
+                            return SUCCESS;
+                        }
+
+                        PHP_METHOD(Phpiwire_Board, pwmRange) {
+                            zval *range_param = NULL;
+                            unsigned int range;
+
+                            zephir_fetch_params(0, 0, 1, &range_param);
+                            if (!range_param) {
+                                range = 1024;
+                            } else {
+                                if (unlikely(Z_TYPE_P(range_param) != IS_LONG)) {
+                                    zephir_throw_exception_string(spl_ce_InvalidArgumentException, SL("Parameter 'range' must be a uint") TSRMLS_CC);
+                                    RETURN_NULL();
+                                }
+                                range = Z_LVAL_P(range_param);
+                            }
+                            pwmSetRange(range); 
+                            RETURN_THISW();
+                        }
+
+            section(data-bespoke-hash='z-calls')
                 p Zephir & Zend Engine language calls
                 pre.smaller
                     code.language-c.
@@ -220,7 +269,7 @@ html
                             $p->write(Pin::LOW);
                             sleep(1);
                         }
-            section(data-bespoke-hash='example2')
+            section(data-bespoke-hash='example3')
                 h2 What about an RGB LED?
                 pre.smallest
                     code.language-php.

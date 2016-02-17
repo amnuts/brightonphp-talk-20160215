@@ -91,6 +91,34 @@ html
                 p &nbsp;
                 p Files have .zep extension<br/>Filename typically matches class name
 
+
+            section(data-bespoke-hash='config')
+               p.nmb Config example
+               pre.smaller
+                   code.language-json.
+                       {
+                           ...
+                           "optimizations": {
+                               "static-type-inference": true,
+                               "static-type-inference-second-pass": true,
+                               "local-context-pass": true,
+                               "constant-folding": true,
+                               "static-constant-class-folding": true,
+                               "call-gatherer-pass": true,
+                               "check-invalid-reads": false
+                           },
+                           "namespace": "phpiwire",
+                           "name": "PHPiWire",
+                           "description": "Control the RaspberryPi GPIO via PHP (with wiringPi)",
+                           "author": "Andrew Collington (andy@amnuts.com)",
+                           "version": "0.2.0",
+                           "verbose": false,
+                           "requires": {
+                               "extensions": []
+                           },
+                           "extra-libs": "-lwiringPi -pthreads"
+                       }
+
             section(data-bespoke-hash='syntax')
                 pre
                     code.language-c.
